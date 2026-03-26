@@ -4,96 +4,32 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
 } from "firebase/auth";
+import "./Login.css"; // <--- Import your CSS file here
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import { auth } from "../firebase/firebaseConfig";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FcGoogle } from "react-icons/fc";
 
 function Login() {
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
-
-  const validateLogin = () => {
-    const newErrors = {};
-    const email = formData.email.trim();
-    const password = formData.password.trim();
-
-    if (!email) {
-      newErrors.email = "Email is required.";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Please enter a valid email address.";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required.";
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";
-    }
-
-    return newErrors;
-  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    setErrors((prev) => ({
-      ...prev,
-      [name]: "",
-      general: "",
-    }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
-    const validationErrors = validateLogin();
-
-    if (Object.keys(validationErrors).length > 0) {
-      setErrors(validationErrors);
-      return;
-    }
-
+    setLoading(true);
     try {
-      setLoading(true);
-
-      await signInWithEmailAndPassword(
-        auth,
-        formData.email.trim(),
-        formData.password
-      );
-
+      await signInWithEmailAndPassword(auth, formData.email, formData.password);
       toast.success("Login successful!");
       navigate("/dashboard");
     } catch (error) {
-      if (
-        error.code === "auth/invalid-credential" ||
-        error.code === "auth/wrong-password" ||
-        error.code === "auth/user-not-found"
-      ) {
-        setErrors({ general: "Invalid email or password." });
-        return;
-      }
-
-      if (error.code === "auth/too-many-requests") {
-        setErrors({
-          general: "Too many failed attempts. Please try again later.",
-        });
-        return;
-      }
-
-      toast.error("Something went wrong during login.");
+      setErrors({ general: "Invalid login credentials." });
     } finally {
       setLoading(false);
     }
@@ -101,90 +37,76 @@ function Login() {
 
   const handleGoogleLogin = async () => {
     const provider = new GoogleAuthProvider();
-
-    setErrors({});
-
     try {
       setLoading(true);
-
       await signInWithPopup(auth, provider);
-
-      toast.success("Google login successful!");
       navigate("/dashboard");
     } catch (error) {
-      if (
-        error.code === "auth/popup-closed-by-user" ||
-        error.code === "auth/cancelled-popup-request"
-      ) {
-        return;
-      }
-
-      toast.error("Google login failed. Please try again.");
+      console.error("Google login error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="login-container">
-      <h2>Login</h2>
+    <div className="login-page-wrapper">
+      {/* LEFT SIDE */}
+      <div className="left-panel">
+        <h1 className="logo-text">Skill-Trackr</h1>
+        <p className="tagline">Track your skills. Grow your career.</p>
+      </div>
 
-      {errors.general && (
-        <p style={{ color: "red", marginBottom: "12px" }}>{errors.general}</p>
-      )}
+      {/* RIGHT SIDE */}
+      <div className="right-panel">
+        <div className="form-container">
+          <h1 className="login-header">Login</h1>
+          <p className="welcome-back">Welcome Back</p>
 
-      <form onSubmit={handleLogin} noValidate>
-        <input
-          type="text"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleChange}
-        />
-        {errors.email && (
-          <p style={{ color: "red", marginTop: "6px" }}>{errors.email}</p>
-        )}
+          <form onSubmit={handleLogin} className="login-form">
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              className="input-field"
+              onChange={handleChange}
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              className="input-field"
+              onChange={handleChange}
+            />
 
-        <br /><br />
+            <Link to="/forgot" className="forgot-link">
+              Forgot Password?
+            </Link>
 
-        <div className="relative">
-  <input
-    type={showPassword ? "text" : "password"}
-    name="password"
-    placeholder="Password"
-    value={formData.password}
-    onChange={handleChange}
-    className="w-full pr-10 px-3 py-2"
-  />
+            <button type="submit" className="login-submit-btn">
+              Login
+            </button>
 
-  <span
-    onClick={() => setShowPassword(!showPassword)}
-    className="absolute right-3 top-1/2 -translate-y-1/2 cursor-pointer text-gray-500"
-  >
-    {showPassword ? <FaEyeSlash /> : <FaEye />}
-  </span>
-</div>
+            <button
+              type="button"
+              onClick={handleGoogleLogin}
+              className="google-btn"
+            >
+              {/* Wrap the logo to give it a white background */}
+              <span className="logo-wrapper">
+                <FcGoogle size={20} />
+              </span>
+              <span className="btn-text">Continue with Google</span>
+            </button>
+          </form>
 
-        {errors.password && (
-          <p style={{ color: "red", marginTop: "6px" }}>{errors.password}</p>
-        )}
-
-        <br /><br />
-
-        <button type="submit" disabled={loading}>
-          {loading ? "Logging in..." : "Login"}
-        </button>
-      </form>
-
-      <br />
-
-      <button type="button" onClick={handleGoogleLogin} disabled={loading}>
-        {loading ? "Loading..." : "Continue with Google"}
-      </button>
-
-      <p>
-        Don’t have an account? <Link to="/signup">Sign Up</Link>
-      </p>
+          <p className="footer-text">
+            Don't have an account?{" "}
+            <Link to="/signup" className="signup-link">
+              Sign Up
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
