@@ -3,8 +3,7 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./firebase/firebaseConfig";
 
-import Signup from "./pages/Signup";
-import Login from "./pages/Login";
+import { Auth } from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Skills from "./pages/Skills";
 import Projects from "./pages/Projects";
@@ -15,7 +14,7 @@ import Profile from "./pages/Profile";
 import PublicPortfolio from "./pages/PublicPortfolio";
 
 function ProtectedRoute({ user, children }) {
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/auth" replace />;
   return <AppLayout>{children}</AppLayout>;
 }
 
@@ -28,6 +27,7 @@ function App() {
       setUser(currentUser);
       setLoading(false);
     });
+
     return () => unsub();
   }, []);
 
@@ -38,17 +38,17 @@ function App() {
       <Route
         path="/"
         element={
-          user ? <Navigate to="/dashboard" replace /> : <Navigate to="/login" replace />
+          user ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/auth" replace />
+          )
         }
       />
 
       <Route
-        path="/login"
-        element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-      />
-      <Route
-        path="/signup"
-        element={user ? <Navigate to="/dashboard" replace /> : <Signup />}
+        path="/auth"
+        element={user ? <Navigate to="/dashboard" replace /> : <Auth />}
       />
 
       <Route
@@ -59,6 +59,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/skills"
         element={
@@ -67,6 +68,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/projects"
         element={
@@ -75,6 +77,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/achievements"
         element={
@@ -83,6 +86,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/recommendations"
         element={
@@ -91,6 +95,7 @@ function App() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/profile"
         element={
